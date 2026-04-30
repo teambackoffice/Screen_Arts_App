@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:screen_arts_app/view/homepage.dart';
+import 'package:screen_arts_app/view/job_orders.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home: const Homepage(),
+      home: const MainHomepage(),
     );
   }
 }

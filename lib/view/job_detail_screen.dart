@@ -100,10 +100,6 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             fontSize: 18,
           ),
         ),
-        actions: [
-          _StatusBadge(status: _jobStatus, color: _statusColor),
-          const SizedBox(width: 16),
-        ],
       ),
       body: Column(
         children: [
@@ -221,7 +217,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         if (!_isRunning)
           Expanded(
             child: _MainButton(
-              label: 'Start Session',
+              label: 'Start',
               icon: Icons.play_arrow_rounded,
               color: primaryColor,
               onPressed: _onStart,
