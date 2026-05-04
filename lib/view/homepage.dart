@@ -78,7 +78,7 @@ class _MainHomepageState extends State<MainHomepage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Good morning,',
+                      'Good afternoon',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[500],
