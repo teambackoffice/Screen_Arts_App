@@ -1,115 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:screen_arts_app/controller/job_order_controller.dart';
+import 'package:screen_arts_app/modal/job_work_modal_class.dart';
 import 'package:screen_arts_app/view/job_detail_screen.dart';
-
-// ── Dummy Data ─────────────────────────────────────────────────────────────────
-
-final List<Map<String, dynamic>> dummyJobs = [
-  {
-    'jobOrderId': 'JO-2024-001',
-    'serviceType': 'Large Format Printing',
-    'operation': 'Digital Print & Lamination',
-    'status': 'In Progress',
-    'itemName': 'Outdoor Flex Banner',
-    'description': 'Full-colour outdoor banner with UV-resistant ink.',
-    'copies': 50,
-    'size': '10 ft × 4 ft',
-    'material': 'Star Flex 270gsm',
-    'colors': 'CMYK (Full Colour)',
-    'totalCost': 5110.00,
-    'startDate': '18 Mar 2024',
-    'endDate': '21 Mar 2024',
-    'employees': [
-      {'name': 'Rajan Kumar', 'role': 'Print Operator'},
-      {'name': 'Aisha Banu', 'role': 'Lamination Technician'},
-      {'name': 'Dev Sharma', 'role': 'Quality Check'},
-    ],
-    'notes': 'Satin finish lamination on both sides. Eyelets every 2 ft.',
-  },
-  {
-    'jobOrderId': 'JO-2024-002',
-    'serviceType': 'Offset Printing',
-    'operation': 'Sheet-fed Offset + UV Coating',
-    'status': 'Pending',
-    'itemName': 'Corporate Business Cards',
-    'description': '400gsm matte board with spot UV on logo.',
-    'copies': 500,
-    'size': '90 mm × 55 mm',
-    'material': 'Matt Art 400gsm',
-    'colors': '4+0 (One Side)',
-    'totalCost': 3204.00,
-    'startDate': '20 Mar 2024',
-    'endDate': '22 Mar 2024',
-    'employees': [
-      {'name': 'Rajan Kumar', 'role': 'Press Operator'},
-      {'name': 'Priya Nair', 'role': 'UV Coating Specialist'},
-    ],
-    'notes': 'Embossed logo on front. Bleed 3mm on all sides.',
-  },
-  {
-    'jobOrderId': 'JO-2024-003',
-    'serviceType': 'Screen Printing',
-    'operation': 'Multi-colour Screen Print',
-    'status': 'Completed',
-    'itemName': 'Promotional T-Shirts',
-    'description': 'Front & back logo print on cotton tees.',
-    'copies': 200,
-    'size': 'A4 print area',
-    'material': '100% Cotton 180gsm',
-    'colors': 'Pantone 2 Colors',
-    'totalCost': 12940.00,
-    'startDate': '10 Mar 2024',
-    'endDate': '15 Mar 2024',
-    'employees': [
-      {'name': 'Rajan Kumar', 'role': 'Screen Printer'},
-      {'name': 'Aisha Banu', 'role': 'Colour Mixing'},
-      {'name': 'Vijay Menon', 'role': 'Curing Operator'},
-      {'name': 'Priya Nair', 'role': 'Packing'},
-    ],
-    'notes': 'Flash cure between passes. Deliver folded in polybag.',
-  },
-  {
-    'jobOrderId': 'JO-2024-004',
-    'serviceType': 'Digital Printing',
-    'operation': 'Roll-to-Roll Print',
-    'status': 'In Progress',
-    'itemName': 'Window Vinyl Stickers',
-    'description': 'Transparent vinyl with white base for windows.',
-    'copies': 100,
-    'size': '60 cm × 90 cm',
-    'material': 'Clear Vinyl 80mic',
-    'colors': 'CMYK + White',
-    'totalCost': 7080.00,
-    'startDate': '16 Mar 2024',
-    'endDate': '18 Mar 2024',
-    'employees': [
-      {'name': 'Rajan Kumar', 'role': 'Machine Operator'},
-      {'name': 'Dev Sharma', 'role': 'Finishing'},
-    ],
-    'notes': 'Apply cold laminate. Cut to shape with 2mm offset.',
-  },
-  {
-    'jobOrderId': 'JO-2024-005',
-    'serviceType': 'Finishing & Binding',
-    'operation': 'Perfect Binding',
-    'status': 'Pending',
-    'itemName': 'Company Annual Report',
-    'description': '100-page report with glossy cover.',
-    'copies': 300,
-    'size': 'A4 (210 × 297 mm)',
-    'material': 'Book Wove 80gsm / Cover 300gsm',
-    'colors': '4+4 (Full Both Sides)',
-    'totalCost': 21040.00,
-    'startDate': '22 Mar 2024',
-    'endDate': '28 Mar 2024',
-    'employees': [
-      {'name': 'Rajan Kumar', 'role': 'Binding Operator'},
-      {'name': 'Vijay Menon', 'role': 'Cover Lamination'},
-    ],
-    'notes': 'Glossy lamination on cover. Shrink-wrap in sets of 25.',
-  },
-];
-
-// ── Homepage ───────────────────────────────────────────────────────────────────
 
 class JobOrders extends StatefulWidget {
   const JobOrders({super.key});
@@ -120,16 +13,23 @@ class JobOrders extends StatefulWidget {
 
 class _JobOrdersState extends State<JobOrders> {
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'In Progress', 'Pending', 'Completed'];
 
-  // Refined Color Palette
-  final Color primaryColor = const Color(0xFF6366F1); // Indigo
+  final Color primaryColor = const Color(0xFF6366F1);
   final Color backgroundColor = const Color(0xFFF8FAFC);
   final Color cardColor = Colors.white;
 
-  List<Map<String, dynamic>> get _filtered {
-    if (_selectedFilter == 'All') return dummyJobs;
-    return dummyJobs.where((j) => j['status'] == _selectedFilter).toList();
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data on screen load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<JobWorkController>().getJobWorks();
+    });
+  }
+
+  List<Message> _getFiltered(List<Message> jobs) {
+    if (_selectedFilter == 'All') return jobs;
+    return jobs.where((j) => j.customJobStatus == _selectedFilter).toList();
   }
 
   @override
@@ -137,41 +37,58 @@ class _JobOrdersState extends State<JobOrders> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: _buildAppBar(),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterBar(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-            child: Text(
-              '${_filtered.length} Active Assignments',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF64748B),
-                letterSpacing: 0.5,
+      body: Consumer<JobWorkController>(
+        builder: (context, controller, _) {
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (controller.error != null) {
+            return _buildErrorState(controller);
+          }
+
+          final jobs = controller.jobWorks?.message ?? [];
+          final filtered = _getFiltered(jobs);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Text(
+                  '${filtered.length} Active Assignments',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: _filtered.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: _filtered.length,
-                    itemBuilder: (context, index) => _JobCard(
-                      job: _filtered[index],
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              JobDetailScreen(job: _filtered[index]),
+              Expanded(
+                child: filtered.isEmpty
+                    ? _buildEmptyState()
+                    : RefreshIndicator(
+                        onRefresh: () => controller.getJobWorks(),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) => _JobCard(
+                            job: filtered[index],
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    JobDetailScreen(job: filtered[index]),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -182,17 +99,17 @@ class _JobOrdersState extends State<JobOrders> {
       elevation: 0,
       title: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: primaryColor.withOpacity(0.1),
-            child: Text(
-              "RK",
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          // CircleAvatar(
+          //   backgroundColor: primaryColor.withOpacity(0.1),
+          //   child: Text(
+          //     "RK",
+          //     style: TextStyle(
+          //       color: primaryColor,
+          //       fontSize: 14,
+          //       fontWeight: FontWeight.bold,
+          //     ),
+          //   ),
+          // ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,56 +122,18 @@ class _JobOrdersState extends State<JobOrders> {
                   fontSize: 18,
                 ),
               ),
-              Text(
-                'Print Master',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFilterBar() {
-    return Container(
-      height: 60,
-      color: cardColor,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _filters.length,
-        itemBuilder: (context, index) {
-          final f = _filters[index];
-          final isSelected = f == _selectedFilter;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-            child: ChoiceChip(
-              label: Text(f),
-              selected: isSelected,
-              onSelected: (_) => setState(() => _selectedFilter = f),
-              selectedColor: const Color(0xFF1E293B),
-              backgroundColor: const Color(0xFFF1F5F9),
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF64748B),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 13,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              elevation: 0,
-              pressElevation: 0,
-              side: BorderSide.none,
-            ),
-          );
-        },
-      ),
+      actions: [
+        Consumer<JobWorkController>(
+          builder: (context, controller, _) => IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF64748B)),
+            onPressed: controller.isLoading ? null : controller.getJobWorks,
+          ),
+        ),
+      ],
     );
   }
 
@@ -281,10 +160,49 @@ class _JobOrdersState extends State<JobOrders> {
       ),
     );
   }
+
+  Widget _buildErrorState(JobWorkController controller) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              controller.error ?? 'Something went wrong',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: controller.getJobWorks,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
+// ── Job Card ───────────────────────────────────────────────────────────────────
+
 class _JobCard extends StatelessWidget {
-  final Map<String, dynamic> job;
+  final Message job;
   final VoidCallback onTap;
 
   const _JobCard({required this.job, required this.onTap});
@@ -304,7 +222,11 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor(job['status']);
+    final statusColor = _getStatusColor(job.customJobStatus);
+
+    // Format posting date as readable string
+    final date =
+        '${job.postingDate.day} ${_month(job.postingDate.month)} ${job.postingDate.year}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -341,7 +263,7 @@ class _JobCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      job['jobOrderId'],
+                      job.jobOrder,
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
@@ -349,12 +271,14 @@ class _JobCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _StatusBadge(status: job['status'], color: statusColor),
+                  _StatusBadge(status: job.customJobStatus, color: statusColor),
                 ],
               ),
               const SizedBox(height: 14),
               Text(
-                job['itemName'],
+                job.customItems.isNotEmpty
+                    ? job.customItems.first.itemName
+                    : job.operation,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -363,9 +287,29 @@ class _JobCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                job['serviceType'],
+                job.customServiceType,
                 style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
               ),
+              if (job.customCustomerName.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 13,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      job.customCustomerName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               const SizedBox(height: 16),
@@ -378,13 +322,29 @@ class _JobCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${job['startDate']} - ${job['endDate']}',
+                    date,
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF475569),
                     ),
                   ),
+                  if (job.customItems.isNotEmpty) ...[
+                    const Spacer(),
+                    const Icon(
+                      Icons.layers_outlined,
+                      size: 13,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${job.customItems.length} item${job.customItems.length > 1 ? 's' : ''}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
                   const Spacer(),
                   const Icon(
                     Icons.arrow_forward_ios_rounded,
@@ -399,7 +359,25 @@ class _JobCard extends StatelessWidget {
       ),
     );
   }
+
+  String _month(int m) => const [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][m];
 }
+
+// ── Status Badge ───────────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   final String status;

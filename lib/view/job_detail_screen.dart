@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:screen_arts_app/modal/job_work_modal_class.dart';
 
 class _TimeEntry {
   final DateTime startTime;
@@ -8,7 +9,7 @@ class _TimeEntry {
 }
 
 class JobDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> job;
+  final Message job;
   const JobDetailScreen({super.key, required this.job});
 
   @override
@@ -31,7 +32,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
   String get _jobStatus {
     if (_isCompleted) return 'Completed';
     if (_isRunning) return 'In Progress';
-    return widget.job['status'] ?? 'Pending';
+    return widget.job.customJobStatus.isNotEmpty ? widget.job.customJobStatus : 'Pending';
   }
 
   Color get _statusColor {
@@ -76,8 +77,13 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final job = widget.job;
-    final List employees = job['employees'] ?? [];
-
+    final List<CustomEmployee> employees = job.customEmployees;
+    
+    // Fallbacks if data isn't directly available on Message
+    final itemName = job.customItems.isNotEmpty ? job.customItems.first.itemName : 'N/A';
+    final copies = job.customItems.isNotEmpty ? job.customItems.first.copies.toString() : '0';
+    final totalCost = job.customItems.isNotEmpty ? job.customItems.first.designCost.toString() : '0';
+    
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -93,7 +99,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          job['jobOrderId'],
+          job.jobOrder,
           style: const TextStyle(
             color: Color(0xFF1E293B),
             fontWeight: FontWeight.w700,
@@ -109,8 +115,8 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               children: [
                 // ── Hero Section ───────────────────────────────────
                 _HeroHeader(
-                  serviceType: job['serviceType'],
-                  operation: job['operation'],
+                  serviceType: job.customServiceType.isNotEmpty ? job.customServiceType : 'Service',
+                  operation: job.operation.isNotEmpty ? job.operation : 'Operation',
                 ),
 
                 const SizedBox(height: 24),
@@ -120,12 +126,12 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                   items: [
                     _InfoTile(
                       label: 'Item Name',
-                      value: job['itemName'],
+                      value: itemName,
                       icon: Icons.inventory_2_outlined,
                     ),
                     _InfoTile(
                       label: 'Total Cost',
-                      value: '₹${job['totalCost']}',
+                      value: '₹$totalCost',
                       icon: Icons.payments_outlined,
                       isBold: true,
                     ),
@@ -140,13 +146,13 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                   children: [
                     _DetailRow(
                       label: 'Copies',
-                      value: '${job['copies']} units',
+                      value: '$copies units',
                     ),
-                    _DetailRow(label: 'Size', value: job['size']),
-                    _DetailRow(label: 'Material', value: job['material']),
+                    _DetailRow(label: 'Size', value: 'N/A'),
+                    _DetailRow(label: 'Material', value: 'N/A'),
                     _DetailRow(
                       label: 'Colors',
-                      value: job['colors'],
+                      value: 'N/A',
                       isLast: true,
                     ),
                   ],
@@ -155,10 +161,11 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                 const SizedBox(height: 24),
 
                 // ── Team ──────────────────────────────────────────
-                _SectionTitle(title: "Assigned Team"),
-                _EmployeeList(employees: employees),
-
-                const SizedBox(height: 24),
+                if (employees.isNotEmpty) ...[
+                  _SectionTitle(title: "Assigned Team"),
+                  _EmployeeList(employees: employees),
+                  const SizedBox(height: 24),
+                ],
 
                 // ── Time Log ──────────────────────────────────────
                 if (_timeLog.isNotEmpty) ...[
@@ -464,7 +471,7 @@ class _DetailRow extends StatelessWidget {
 }
 
 class _EmployeeList extends StatelessWidget {
-  final List employees;
+  final List<CustomEmployee> employees;
   const _EmployeeList({required this.employees});
 
   @override
@@ -473,6 +480,9 @@ class _EmployeeList extends StatelessWidget {
       children: employees.asMap().entries.map((entry) {
         final emp = entry.value;
         final isLast = entry.key == employees.length - 1;
+        final employeeName = emp.name1.isNotEmpty ? emp.name1 : emp.employees;
+        final initial = employeeName.isNotEmpty ? employeeName[0].toUpperCase() : '?';
+
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -486,7 +496,7 @@ class _EmployeeList extends StatelessWidget {
                 backgroundColor: const Color(0xFFF1F5F9),
                 radius: 18,
                 child: Text(
-                  emp['name'][0],
+                  initial,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -498,15 +508,15 @@ class _EmployeeList extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    emp['name'],
+                    employeeName,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    emp['role'],
-                    style: const TextStyle(
+                  const Text(
+                    'Employee',
+                    style: TextStyle(
                       fontSize: 11,
                       color: Color(0xFF64748B),
                     ),
