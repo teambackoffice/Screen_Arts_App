@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:screen_arts_app/modal/job_work_modal_class.dart';
 import 'package:screen_arts_app/service/job_order_service.dart';
 
-class JobWorkController extends ChangeNotifier {
+class EMPLOYEEJobWorkController extends ChangeNotifier {
   final JobWorkService _service = JobWorkService();
 
   bool isLoading = false;

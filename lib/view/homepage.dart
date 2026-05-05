@@ -248,7 +248,7 @@ class _MainHomepageState extends State<MainHomepage>
               iconColor: const Color(0xFF534AB7),
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const JobOrders()),
+                MaterialPageRoute(builder: (_) => JobOrders()),
               ),
             ),
           ),

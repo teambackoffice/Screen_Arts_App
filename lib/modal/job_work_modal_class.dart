@@ -61,7 +61,7 @@ class Message {
   dynamic amendedFrom;
   String doctype;
   List<dynamic> customPrintItems;
-  List<dynamic> timeLogs;
+  List<TimeLog> timeLogs;
   List<CustomEmployee> customEmployees;
   List<CustomItem> customItems;
   List<dynamic> scheduledTimeLogs;
@@ -142,7 +142,9 @@ class Message {
     customPrintItems: List<dynamic>.from(
       json["custom_print_items"].map((x) => x),
     ),
-    timeLogs: List<dynamic>.from(json["time_logs"].map((x) => x)),
+    timeLogs: List<TimeLog>.from(
+      json["time_logs"].map((x) => TimeLog.fromJson(x)),
+    ),
     customEmployees: List<CustomEmployee>.from(
       json["custom_employees"].map((x) => CustomEmployee.fromJson(x)),
     ),
@@ -189,7 +191,7 @@ class Message {
     "amended_from": amendedFrom,
     "doctype": doctype,
     "custom_print_items": List<dynamic>.from(customPrintItems.map((x) => x)),
-    "time_logs": List<dynamic>.from(timeLogs.map((x) => x)),
+    "time_logs": List<dynamic>.from(timeLogs.map((x) => x.toJson())),
     "custom_employees": List<dynamic>.from(
       customEmployees.map((x) => x.toJson()),
     ),
@@ -339,6 +341,78 @@ class CustomItem {
     "copies": copies,
     "design_cost": designCost,
     "remarks": remarks,
+    "parent": parent,
+    "parentfield": parentfield,
+    "parenttype": parenttype,
+    "doctype": doctype,
+  };
+}
+
+class TimeLog {
+  String name;
+  String owner;
+  DateTime? creation;
+  DateTime? modified;
+  String modifiedBy;
+  double docstatus;
+  double idx;
+  DateTime? fromTime;
+  DateTime? toTime;
+  double timeInMins;
+  String employee;
+  String parent;
+  String parentfield;
+  String parenttype;
+  String doctype;
+
+  TimeLog({
+    required this.name,
+    required this.owner,
+    this.creation,
+    this.modified,
+    required this.modifiedBy,
+    required this.docstatus,
+    required this.idx,
+    this.fromTime,
+    this.toTime,
+    required this.timeInMins,
+    required this.employee,
+    required this.parent,
+    required this.parentfield,
+    required this.parenttype,
+    required this.doctype,
+  });
+
+  factory TimeLog.fromJson(Map<String, dynamic> json) => TimeLog(
+    name: json["name"] ?? '',
+    owner: json["owner"] ?? '',
+    creation: json["creation"] != null ? DateTime.tryParse(json["creation"]) : null,
+    modified: json["modified"] != null ? DateTime.tryParse(json["modified"]) : null,
+    modifiedBy: json["modified_by"] ?? '',
+    docstatus: json["docstatus"]?.toDouble() ?? 0.0,
+    idx: json["idx"]?.toDouble() ?? 0.0,
+    fromTime: json["from_time"] != null ? DateTime.tryParse(json["from_time"]) : null,
+    toTime: json["to_time"] != null ? DateTime.tryParse(json["to_time"]) : null,
+    timeInMins: json["time_in_mins"]?.toDouble() ?? 0.0,
+    employee: json["employee"] ?? '',
+    parent: json["parent"] ?? '',
+    parentfield: json["parentfield"] ?? '',
+    parenttype: json["parenttype"] ?? '',
+    doctype: json["doctype"] ?? '',
+  );
+
+  Map<String, dynamic> toJson() => {
+    "name": name,
+    "owner": owner,
+    "creation": creation?.toIso8601String(),
+    "modified": modified?.toIso8601String(),
+    "modified_by": modifiedBy,
+    "docstatus": docstatus,
+    "idx": idx,
+    "from_time": fromTime?.toIso8601String(),
+    "to_time": toTime?.toIso8601String(),
+    "time_in_mins": timeInMins,
+    "employee": employee,
     "parent": parent,
     "parentfield": parentfield,
     "parenttype": parenttype,

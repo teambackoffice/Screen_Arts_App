@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:screen_arts_app/controller/job_order_controller.dart';
+import 'package:screen_arts_app/controller/job_work_controller.dart';
 import 'package:screen_arts_app/controller/login_controller.dart';
 import 'package:screen_arts_app/view/splash_screen.dart';
 
@@ -17,8 +18,11 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthController>(create: (_) => AuthController()),
-        ChangeNotifierProvider<JobWorkController>(
-          create: (_) => JobWorkController(),
+        ChangeNotifierProvider<EMPLOYEEJobWorkController>(
+          create: (_) => EMPLOYEEJobWorkController(),
+        ),
+        ChangeNotifierProvider<JobWorkProvider>(
+          create: (_) => JobWorkProvider(),
         ),
       ],
       child: MaterialApp(

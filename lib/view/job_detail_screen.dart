@@ -1,93 +1,54 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:screen_arts_app/controller/job_work_controller.dart';
 import 'package:screen_arts_app/modal/job_work_modal_class.dart';
 
-class _TimeEntry {
-  final DateTime startTime;
-  DateTime? stopTime;
-  _TimeEntry({required this.startTime, this.stopTime});
-}
-
-class JobDetailScreen extends StatefulWidget {
+class JobDetailScreen extends StatelessWidget {
   final Message job;
   const JobDetailScreen({super.key, required this.job});
 
   @override
-  State<JobDetailScreen> createState() => _JobDetailScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => JobWorkProvider()..init(job),
+      child: _JobDetailView(job: job),
+    );
+  }
 }
 
-class _JobDetailScreenState extends State<JobDetailScreen> {
-  bool _isRunning = false;
-  bool _showComplete = false;
-  bool _isCompleted = false;
-  final List<_TimeEntry> _timeLog = [];
+class _JobDetailView extends StatelessWidget {
+  final Message job;
+  const _JobDetailView({required this.job});
 
-  // Theme Colors
-  final Color primaryColor = const Color(0xFF6366F1); // Indigo
-  final Color successColor = const Color(0xFF10B981); // Emerald
-  final Color errorColor = const Color(0xFFEF4444); // Rose
-  final Color surfaceColor = Colors.white;
-  final Color backgroundColor = const Color(0xFFF8FAFC);
-
-  String get _jobStatus {
-    if (_isCompleted) return 'Completed';
-    if (_isRunning) return 'In Progress';
-    return widget.job.customJobStatus.isNotEmpty ? widget.job.customJobStatus : 'Pending';
-  }
-
-  Color get _statusColor {
-    if (_isCompleted) return successColor;
-    if (_isRunning) return primaryColor;
-    return Colors.orange;
-  }
+  static const Color primaryColor = Color(0xFF6366F1);
+  static const Color successColor = Color(0xFF10B981);
+  static const Color errorColor = Color(0xFFEF4444);
+  static const Color backgroundColor = Color(0xFFF8FAFC);
 
   String _fmt(DateTime dt) =>
       "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}";
 
-  void _onStart() {
-    setState(() {
-      _isRunning = true;
-      _showComplete = true;
-      _timeLog.insert(0, _TimeEntry(startTime: DateTime.now()));
-    });
-  }
-
-  void _onStop() {
-    setState(() {
-      _isRunning = false;
-      if (_timeLog.isNotEmpty && _timeLog.first.stopTime == null) {
-        _timeLog.first.stopTime = DateTime.now();
-      }
-    });
-  }
-
-  void _onComplete() {
-    setState(() {
-      if (_isRunning &&
-          _timeLog.isNotEmpty &&
-          _timeLog.first.stopTime == null) {
-        _timeLog.first.stopTime = DateTime.now();
-      }
-      _isRunning = false;
-      _isCompleted = true;
-      _showComplete = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final job = widget.job;
-    final List<CustomEmployee> employees = job.customEmployees;
-    
-    // Fallbacks if data isn't directly available on Message
-    final itemName = job.customItems.isNotEmpty ? job.customItems.first.itemName : 'N/A';
-    final copies = job.customItems.isNotEmpty ? job.customItems.first.copies.toString() : '0';
-    final totalCost = job.customItems.isNotEmpty ? job.customItems.first.designCost.toString() : '0';
-    
+    final provider = context.watch<JobWorkProvider>();
+
+    final String jobStatus = _resolveStatus(provider.status);
+    final Color statusColor = _resolveStatusColor(provider.status);
+
+    final itemName = job.customItems.isNotEmpty
+        ? job.customItems.first.itemName
+        : 'N/A';
+    final copies = job.customItems.isNotEmpty
+        ? job.customItems.first.copies.toString()
+        : '0';
+    final totalCost = job.customItems.isNotEmpty
+        ? job.customItems.first.designCost.toString()
+        : '0';
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
@@ -109,19 +70,53 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       ),
       body: Column(
         children: [
+          // ── Error Banner ──────────────────────────────────────────
+          if (provider.errorMessage.isNotEmpty)
+            Material(
+              color: errorColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      color: errorColor,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        provider.errorMessage,
+                        style: const TextStyle(
+                          color: errorColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               children: [
-                // ── Hero Section ───────────────────────────────────
                 _HeroHeader(
-                  serviceType: job.customServiceType.isNotEmpty ? job.customServiceType : 'Service',
-                  operation: job.operation.isNotEmpty ? job.operation : 'Operation',
+                  serviceType: job.customServiceType.isNotEmpty
+                      ? job.customServiceType
+                      : 'Service',
+                  operation: job.operation.isNotEmpty
+                      ? job.operation
+                      : 'Operation',
+                  status: jobStatus,
+                  statusColor: statusColor,
                 ),
-
                 const SizedBox(height: 24),
-
-                // ── Info Grid ──────────────────────────────────────
                 _InfoGrid(
                   items: [
                     _InfoTile(
@@ -130,70 +125,55 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                       icon: Icons.inventory_2_outlined,
                     ),
                     _InfoTile(
-                      label: 'Total Cost',
-                      value: '₹$totalCost',
+                      label: 'Sales Order No',
+                      value: job.customSalesOrderNumber,
                       icon: Icons.payments_outlined,
                       isBold: true,
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 20),
 
-                // ── Production Specs ──────────────────────────────
-                _SectionTitle(title: "Production Specs"),
-                _SectionCard(
-                  children: [
-                    _DetailRow(
-                      label: 'Copies',
-                      value: '$copies units',
-                    ),
-                    _DetailRow(label: 'Size', value: 'N/A'),
-                    _DetailRow(label: 'Material', value: 'N/A'),
-                    _DetailRow(
-                      label: 'Colors',
-                      value: 'N/A',
-                      isLast: true,
-                    ),
-                  ],
-                ),
-
                 const SizedBox(height: 24),
-
-                // ── Team ──────────────────────────────────────────
-                if (employees.isNotEmpty) ...[
-                  _SectionTitle(title: "Assigned Team"),
-                  _EmployeeList(employees: employees),
+                if (job.customEmployees.isNotEmpty) ...[
+                  const _SectionTitle(title: "Assigned Team"),
+                  _EmployeeList(employees: job.customEmployees),
                   const SizedBox(height: 24),
                 ],
-
-                // ── Time Log ──────────────────────────────────────
-                if (_timeLog.isNotEmpty) ...[
-                  _SectionTitle(title: "Activity Log"),
-                  ..._timeLog
-                      .map((entry) => _TimeLogTile(entry: entry, fmt: _fmt))
-                      .toList(),
+                if (job.timeLogs.isNotEmpty ||
+                    provider.localTimeLogs.isNotEmpty) ...[
+                  const _SectionTitle(title: "Activity Log"),
+                  ...job.timeLogs
+                      .where((log) => log.fromTime != null)
+                      .map((log) => _ServerTimeLogTile(log: log, fmt: _fmt)),
+                  ...provider.localTimeLogs.map(
+                    (entry) => _LocalTimeLogTile(entry: entry, fmt: _fmt),
+                  ),
                 ],
-
                 const SizedBox(height: 40),
               ],
             ),
           ),
 
-          // ── Bottom Actions ──────────────────────────────────────
+          // ── Bottom Actions ────────────────────────────────────────
           _BottomActionContainer(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _buildActionButtons(),
-            ),
+            child: provider.isLoading
+                ? const SizedBox(
+                    height: 54,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _buildActionButtons(context, provider),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons() {
-    if (_isCompleted) {
+  Widget _buildActionButtons(BuildContext context, JobWorkProvider provider) {
+    if (provider.status == JobWorkStatus.completed) {
       return Container(
         height: 54,
         width: double.infinity,
@@ -203,9 +183,9 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: const [
             Icon(Icons.check_circle, color: successColor),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Text(
               'Job Completed Successfully',
               style: TextStyle(
@@ -219,39 +199,147 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     }
 
     return Row(
-      key: ValueKey('$_isRunning$_showComplete'),
+      key: ValueKey(provider.status),
       children: [
-        if (!_isRunning)
+        // IDLE → Start only
+        if (provider.status == JobWorkStatus.idle)
           Expanded(
             child: _MainButton(
               label: 'Start',
               icon: Icons.play_arrow_rounded,
               color: primaryColor,
-              onPressed: _onStart,
+              onPressed: () =>
+                  context.read<JobWorkProvider>().startTimeLog(job.name),
             ),
           ),
-        if (_isRunning)
+
+        // RUNNING → Stop only
+        if (provider.status == JobWorkStatus.running)
           Expanded(
             child: _MainButton(
               label: 'Stop',
               icon: Icons.stop_rounded,
               color: errorColor,
-              onPressed: _onStop,
               isOutlined: true,
+              onPressed: () =>
+                  context.read<JobWorkProvider>().stopTimeLog(job.name),
             ),
           ),
-        if (_showComplete || _isRunning) ...[
+
+        // STOPPED → Continue + Complete
+        if (provider.status == JobWorkStatus.stopped) ...[
+          Expanded(
+            child: _MainButton(
+              label: 'Continue',
+              icon: Icons.play_circle_outline_rounded,
+              color: primaryColor,
+              onPressed: () =>
+                  context.read<JobWorkProvider>().continueTimeLog(job.name),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: _MainButton(
               label: 'Complete',
               icon: Icons.done_all_rounded,
               color: successColor,
-              onPressed: _onComplete,
+              onPressed: () =>
+                  context.read<JobWorkProvider>().completeJobWork(job.name),
             ),
           ),
         ],
       ],
+    );
+  }
+
+  String _resolveStatus(JobWorkStatus status) {
+    switch (status) {
+      case JobWorkStatus.running:
+        return 'In Progress';
+      case JobWorkStatus.stopped:
+        return 'Stopped';
+      case JobWorkStatus.completed:
+        return 'Completed';
+      case JobWorkStatus.idle:
+        return job.customJobStatus.isNotEmpty ? job.customJobStatus : 'Pending';
+    }
+  }
+
+  Color _resolveStatusColor(JobWorkStatus status) {
+    switch (status) {
+      case JobWorkStatus.running:
+        return primaryColor;
+      case JobWorkStatus.stopped:
+        return Colors.orange;
+      case JobWorkStatus.completed:
+        return successColor;
+      case JobWorkStatus.idle:
+        return Colors.orange;
+    }
+  }
+}
+
+// ── Local Time Log Tile ───────────────────────────────────────────────────────
+
+class _LocalTimeLogTile extends StatelessWidget {
+  final LocalTimeEntry entry;
+  final String Function(DateTime) fmt;
+  const _LocalTimeLogTile({required this.entry, required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    final isRunning = entry.stopTime == null;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isRunning ? Colors.indigo.withOpacity(0.03) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isRunning
+              ? Colors.indigo.withOpacity(0.2)
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isRunning ? Icons.timer_outlined : Icons.history_rounded,
+            size: 18,
+            color: isRunning ? Colors.indigo : Colors.black54,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              fmt(entry.startTime),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ),
+          const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.grey),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: isRunning
+                  ? const Text(
+                      "Running...",
+                      style: TextStyle(
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    )
+                  : Text(
+                      fmt(entry.stopTime!),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -261,7 +349,14 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
 class _HeroHeader extends StatelessWidget {
   final String serviceType;
   final String operation;
-  const _HeroHeader({required this.serviceType, required this.operation});
+  final String status;
+  final Color statusColor;
+  const _HeroHeader({
+    required this.serviceType,
+    required this.operation,
+    required this.status,
+    required this.statusColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -276,14 +371,38 @@ class _HeroHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            serviceType.toUpperCase(),
-            style: TextStyle(
-              color: Colors.indigo.shade200,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                serviceType.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.indigo.shade200,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(color: statusColor.withOpacity(0.4)),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -295,33 +414,6 @@ class _HeroHeader extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final String status;
-  final Color color;
-  const _StatusBadge({required this.status, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Center(
-        child: Text(
-          status,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          ),
-        ),
       ),
     );
   }
@@ -355,13 +447,13 @@ class _InfoTile extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
               color: const Color(0xFF1E293B),
             ),
@@ -470,6 +562,69 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
+class _ServerTimeLogTile extends StatelessWidget {
+  final TimeLog log;
+  final String Function(DateTime) fmt;
+  const _ServerTimeLogTile({required this.log, required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    final isRunning = log.toTime == null;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isRunning ? Colors.indigo.withOpacity(0.03) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isRunning
+              ? Colors.indigo.withOpacity(0.2)
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isRunning ? Icons.timer_outlined : Icons.history_rounded,
+            size: 18,
+            color: isRunning ? Colors.indigo : Colors.black54,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              log.fromTime != null ? fmt(log.fromTime!) : 'N/A',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ),
+          const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.grey),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: isRunning
+                  ? const Text(
+                      "Running...",
+                      style: TextStyle(
+                        color: Colors.indigo,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    )
+                  : Text(
+                      fmt(log.toTime!),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmployeeList extends StatelessWidget {
   final List<CustomEmployee> employees;
   const _EmployeeList({required this.employees});
@@ -480,9 +635,8 @@ class _EmployeeList extends StatelessWidget {
       children: employees.asMap().entries.map((entry) {
         final emp = entry.value;
         final isLast = entry.key == employees.length - 1;
-        final employeeName = emp.name1.isNotEmpty ? emp.name1 : emp.employees;
-        final initial = employeeName.isNotEmpty ? employeeName[0].toUpperCase() : '?';
-
+        final name = emp.name1.isNotEmpty ? emp.name1 : emp.employees;
+        final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -508,7 +662,7 @@ class _EmployeeList extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    employeeName,
+                    name,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -516,10 +670,7 @@ class _EmployeeList extends StatelessWidget {
                   ),
                   const Text(
                     'Employee',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF64748B),
-                    ),
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                   ),
                 ],
               ),
@@ -527,69 +678,6 @@ class _EmployeeList extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-class _TimeLogTile extends StatelessWidget {
-  final _TimeEntry entry;
-  final String Function(DateTime) fmt;
-  const _TimeLogTile({required this.entry, required this.fmt});
-
-  @override
-  Widget build(BuildContext context) {
-    bool isRunning = entry.stopTime == null;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isRunning ? Colors.indigo.withOpacity(0.03) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isRunning
-              ? Colors.indigo.withOpacity(0.2)
-              : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isRunning ? Icons.timer_outlined : Icons.history_rounded,
-            size: 18,
-            color: isRunning ? Colors.indigo : Colors.black,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              fmt(entry.startTime),
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-          ),
-          const Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.grey),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: isRunning
-                  ? const Text(
-                      "Running...",
-                      style: TextStyle(
-                        color: Colors.indigo,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    )
-                  : Text(
-                      fmt(entry.stopTime!),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

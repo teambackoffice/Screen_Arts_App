@@ -23,7 +23,7 @@ class _JobOrdersState extends State<JobOrders> {
     super.initState();
     // Fetch data on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<JobWorkController>().getJobWorks();
+      context.read<EMPLOYEEJobWorkController>().getJobWorks();
     });
   }
 
@@ -37,7 +37,7 @@ class _JobOrdersState extends State<JobOrders> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: _buildAppBar(),
-      body: Consumer<JobWorkController>(
+      body: Consumer<EMPLOYEEJobWorkController>(
         builder: (context, controller, _) {
           if (controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -75,13 +75,18 @@ class _JobOrdersState extends State<JobOrders> {
                           itemCount: filtered.length,
                           itemBuilder: (context, index) => _JobCard(
                             job: filtered[index],
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    JobDetailScreen(job: filtered[index]),
-                              ),
-                            ),
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      JobDetailScreen(job: filtered[index]),
+                                ),
+                              );
+                              if (context.mounted) {
+                                controller.getJobWorks();
+                              }
+                            },
                           ),
                         ),
                       ),
@@ -127,7 +132,7 @@ class _JobOrdersState extends State<JobOrders> {
         ],
       ),
       actions: [
-        Consumer<JobWorkController>(
+        Consumer<EMPLOYEEJobWorkController>(
           builder: (context, controller, _) => IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF64748B)),
             onPressed: controller.isLoading ? null : controller.getJobWorks,
@@ -161,7 +166,7 @@ class _JobOrdersState extends State<JobOrders> {
     );
   }
 
-  Widget _buildErrorState(JobWorkController controller) {
+  Widget _buildErrorState(EMPLOYEEJobWorkController controller) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -353,11 +358,62 @@ class _JobCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (job.timeLogs.isNotEmpty &&
+                  job.timeLogs.first.fromTime != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.access_time_rounded,
+                      size: 14,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatTime(job.timeLogs.first.fromTime),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    if (job.timeLogs.first.toTime != null) ...[
+                      const SizedBox(width: 4),
+                      const Text(
+                        '-',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatTime(job.timeLogs.first.toTime),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime? dt) {
+    if (dt == null) return '';
+    int h = dt.hour;
+    int m = dt.minute;
+    String ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h == 0) h = 12;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $ampm';
   }
 
   String _month(int m) => const [
