@@ -5,6 +5,7 @@ import 'package:screen_arts_app/controller/get_check_controller.dart';
 import 'package:screen_arts_app/controller/job_order_controller.dart';
 import 'package:screen_arts_app/controller/job_work_controller.dart';
 import 'package:screen_arts_app/controller/login_controller.dart';
+import 'package:screen_arts_app/controller/logout_controller.dart';
 import 'package:screen_arts_app/view/splash_screen.dart';
 
 void main() {
@@ -31,6 +32,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<CheckinStatusController>(
           create: (_) => CheckinStatusController(),
+        ),
+        ChangeNotifierProvider<LogoutController>(
+          create: (_) => LogoutController(),
         ),
       ],
       child: MaterialApp(

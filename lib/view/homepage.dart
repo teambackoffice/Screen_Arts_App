@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:screen_arts_app/controller/login_controller.dart';
+import 'package:screen_arts_app/controller/logout_controller.dart';
 import 'package:screen_arts_app/view/checkin/check_in.dart';
 import 'package:screen_arts_app/view/job_orders.dart';
+import 'package:screen_arts_app/view/loginPage/login_page.dart';
 
 class MainHomepage extends StatefulWidget {
   const MainHomepage({super.key});
@@ -36,6 +40,167 @@ class _MainHomepageState extends State<MainHomepage>
     super.dispose();
   }
 
+  // ── Confirm Logout ───────────────────────────────────────────────────────
+  Future<void> _confirmLogout() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    final username = authController.fullName ?? '';
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAECE7),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: Color(0xFF993C1D),
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Logout',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A1A1A),
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Are you sure you want to logout from your account?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF888780),
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                // Cancel
+                Expanded(
+                  child: Consumer<LogoutController>(
+                    builder: (ctx, logoutCtrl, _) {
+                      return GestureDetector(
+                        onTap: logoutCtrl.isLoading ? null : () => Navigator.pop(ctx),
+                        child: Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F4F1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFE8E6E0),
+                              width: 0.5,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: logoutCtrl.isLoading
+                                  ? const Color(0xFF888780).withOpacity(0.5)
+                                  : const Color(0xFF888780),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Confirm
+                Expanded(
+                  child: Consumer<LogoutController>(
+                    builder: (ctx, logoutCtrl, _) {
+                      return GestureDetector(
+                        onTap: logoutCtrl.isLoading
+                            ? null
+                            : () async {
+                                final success = await logoutCtrl.logout(username);
+                                if (!ctx.mounted) return;
+
+                                if (success) {
+                                  Navigator.pushAndRemoveUntil(
+                                    ctx,
+                                    MaterialPageRoute(
+                                        builder: (_) => const LoginPage()),
+                                    (route) => false,
+                                  );
+                                } else {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          'Logout failed. Please try again.'),
+                                      backgroundColor: const Color(0xFF993C1D),
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      margin: const EdgeInsets.all(16),
+                                    ),
+                                  );
+                                }
+                              },
+                        child: Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: logoutCtrl.isLoading
+                                ? const Color(0xFF993C1D).withOpacity(0.7)
+                                : const Color(0xFF993C1D),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: logoutCtrl.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Logout',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +214,6 @@ class _MainHomepageState extends State<MainHomepage>
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(child: _buildTopBar()),
-                SliverToBoxAdapter(child: _buildStatusStrip()),
                 SliverToBoxAdapter(
                   child: _buildSectionHeader('Management hub'),
                 ),
@@ -65,69 +229,112 @@ class _MainHomepageState extends State<MainHomepage>
 
   // ── Top Bar ──────────────────────────────────────────────────────────────
   Widget _buildTopBar() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Good afternoon',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Alex Sterling',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
+    final authController = Provider.of<AuthController>(context);
+    final fullName = authController.fullName ?? 'User';
+    final initials = fullName.isNotEmpty
+        ? fullName
+              .trim()
+              .split(RegExp(r'\s+'))
+              .map((e) => e.isNotEmpty ? e[0] : '')
+              .take(2)
+              .join()
+              .toUpperCase()
+        : 'U';
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      child: Row(
+        children: [
+          // Greeting + Name
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Good afternoon',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  fullName,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A1A1A),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Avatar
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF185FA5),
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF185FA5).withOpacity(0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Color(0xFFE6F1FB),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
               ),
-              Container(
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Logout Button — swaps to spinner when loading
+          Consumer<LogoutController>(
+            builder: (context, logoutCtrl, _) {
+              return Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
+                  color: const Color(0xFFF5F4F1),
                   shape: BoxShape.circle,
-                  color: const Color(0xFF185FA5),
-                  border: Border.all(color: Colors.white, width: 2.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF185FA5).withOpacity(0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    'AS',
-                    style: TextStyle(
-                      color: Color(0xFFE6F1FB),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
+                  border: Border.all(
+                    color: const Color(0xFFE8E6E0),
+                    width: 0.5,
                   ),
                 ),
-              ),
-            ],
+                child: logoutCtrl.isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF888780),
+                        ),
+                      )
+                    : IconButton(
+                        onPressed: _confirmLogout,
+                        icon: const Icon(Icons.logout_rounded, size: 20),
+                        color: const Color(0xFF888780),
+                        tooltip: 'Logout',
+                      ),
+              );
+            },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -205,34 +412,6 @@ class _MainHomepageState extends State<MainHomepage>
     );
   }
 
-  // ── Stats Row ────────────────────────────────────────────────────────────
-  Widget _buildStatsRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              label: 'Open orders',
-              value: '14',
-              badge: '+3 today',
-              badgePositive: true,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              label: 'Completed',
-              value: '87',
-              badge: 'This month',
-              badgePositive: false,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Action Grid ──────────────────────────────────────────────────────────
   Widget _buildActionGrid(BuildContext context) {
     return Padding(
@@ -260,12 +439,10 @@ class _MainHomepageState extends State<MainHomepage>
               icon: Icons.schedule_rounded,
               iconBg: const Color(0xFFFAECE7),
               iconColor: const Color(0xFF993C1D),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CheckInOut()),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CheckInOut()),
+              ),
             ),
           ),
         ],
@@ -315,77 +492,6 @@ class _PulseDotState extends State<_PulseDot>
           shape: BoxShape.circle,
           color: Color(0xFF1D9E75),
         ),
-      ),
-    );
-  }
-}
-
-// ── Stat Card ─────────────────────────────────────────────────────────────
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String badge;
-  final bool badgePositive;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.badge,
-    required this.badgePositive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFEDE6),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 10,
-              color: Color(0xFF888780),
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1A1A1A),
-              letterSpacing: -0.5,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: badgePositive
-                  ? const Color(0xFFE1F5EE)
-                  : const Color(0xFFE8E6E0),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              badge,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: badgePositive
-                    ? const Color(0xFF0F6E56)
-                    : const Color(0xFF5F5E5A),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -458,7 +564,6 @@ class _ActionCardState extends State<_ActionCard>
           ),
           child: Stack(
             children: [
-              // Arrow top-right
               Positioned(
                 top: 0,
                 right: 0,
@@ -476,7 +581,6 @@ class _ActionCardState extends State<_ActionCard>
                   ),
                 ),
               ),
-              // Content
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

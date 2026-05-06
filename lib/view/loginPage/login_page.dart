@@ -97,17 +97,13 @@ class _LoginPageState extends State<LoginPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 52),
+                    const SizedBox(height: 120),
                     _buildHeader(),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 100),
                     _buildCard(),
                     const SizedBox(height: 24),
                     _buildLoginButton(isLoading),
                     const SizedBox(height: 20),
-                    _buildForgotPassword(),
-                    const SizedBox(height: 48),
-                    _buildFooter(),
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -194,7 +190,7 @@ class _LoginPageState extends State<LoginPage>
           _buildTextField(
             controller: _emailController,
             label: 'Email address',
-            hint: 'you@screenarts.com',
+            hint: 'you@gmail.com',
             icon: Icons.mail_outline_rounded,
             keyboardType: TextInputType.emailAddress,
           ),
@@ -307,68 +303,6 @@ class _LoginPageState extends State<LoginPage>
           ),
         ],
       ),
-    );
-  }
-
-  // ── Remember Me + Forgot ──────────────────────────────────────────────────
-  Widget _buildForgotPassword() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _rememberMe = !_rememberMe),
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: _rememberMe
-                      ? const Color(0xFF185FA5)
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: _rememberMe
-                        ? const Color(0xFF185FA5)
-                        : const Color(0xFFCCCAC4),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: _rememberMe
-                    ? const Icon(
-                        Icons.check_rounded,
-                        size: 12,
-                        color: Colors.white,
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Remember me',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF5F5E5A),
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Spacer(),
-        GestureDetector(
-          onTap: () {
-            // TODO: navigate to forgot password screen
-          },
-          child: const Text(
-            'Forgot password?',
-            style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF185FA5),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
