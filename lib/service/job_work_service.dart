@@ -34,6 +34,11 @@ class JobWorkService {
     final headers = await _buildHeaders();
     final uri = Uri.parse('$_baseUrl.$endpoint');
 
+    print('🔵 REQUEST → $endpoint');
+    print('➡️ URL: $uri');
+    print('➡️ BODY: ${json.encode({'job_work_name': jobWorkName})}');
+    print('➡️ HEADERS: $headers');
+
     final request = http.Request('POST', uri);
     request.headers.addAll(headers);
     request.body = json.encode({'job_work_name': jobWorkName});
@@ -41,14 +46,20 @@ class JobWorkService {
     final streamedResponse = await request.send();
     final responseBody = await streamedResponse.stream.bytesToString();
 
+    print('🟢 RESPONSE ← $endpoint');
+    print('⬅️ STATUS: ${streamedResponse.statusCode}');
+    print('⬅️ BODY: $responseBody');
+
     if (streamedResponse.statusCode == 200) {
       try {
         final decoded = json.decode(responseBody);
         return decoded as Map<String, dynamic>;
       } catch (e) {
+        print('❌ JSON PARSE ERROR: $e');
         throw Exception('Invalid JSON response');
       }
     } else {
+      print('❌ API ERROR: ${streamedResponse.reasonPhrase}');
       throw ApiException(
         statusCode: streamedResponse.statusCode,
         message: streamedResponse.reasonPhrase ?? 'Unknown error',

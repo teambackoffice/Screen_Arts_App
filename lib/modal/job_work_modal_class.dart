@@ -107,29 +107,29 @@ class Message {
   });
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(
-    name: json["name"],
-    owner: json["owner"],
+    name: json["name"] ?? "",
+    owner: json["owner"] ?? "",
     creation: DateTime.parse(json["creation"]),
     modified: DateTime.parse(json["modified"]),
-    modifiedBy: json["modified_by"],
+    modifiedBy: json["modified_by"] ?? "",
     docstatus: json["docstatus"]?.toDouble() ?? 0.0,
     idx: json["idx"]?.toDouble() ?? 0.0,
-    namingSeries: json["naming_series"],
-    jobOrder: json["job_order"],
-    customSalesOrderNumber: json["custom_sales_order_number"],
+    namingSeries: json["naming_series"] ?? "",
+    jobOrder: json["job_order"] ?? "",
+    customSalesOrderNumber: json["custom_sales_order_number"] ?? "",
     productionItem: json["production_item"],
     employee: json["employee"],
     customDesigner: json["custom_designer"],
     customPrintingPerson: json["custom_printing_person"],
     customFinishingPerson: json["custom_finishing_person"],
-    operation: json["operation"],
+    operation: json["operation"] ?? "",
     postingDate: DateTime.parse(json["posting_date"]),
-    company: json["company"],
-    customer: json["customer"],
-    customCustomerName: json["custom_customer_name"],
-    status: json["status"],
-    customJobStatus: json["custom_job_status"],
-    customServiceType: json["custom_service_type"],
+    company: json["company"] ?? "",
+    customer: json["customer"] ?? "",
+    customCustomerName: json["custom_customer_name"] ?? "",
+    status: json["status"] ?? "",
+    customJobStatus: json["custom_job_status"] ?? "",
+    customServiceType: json["custom_service_type"] ?? "",
     customDesignFile: json["custom_design_file"],
     expectedStartDate: json["expected_start_date"],
     expectedTimeRequiredInMins: json["expected_time_required_in_mins"]?.toDouble() ?? 0.0,
@@ -138,22 +138,22 @@ class Message {
     totalTimeInMins: json["total_time_in_mins"]?.toDouble() ?? 0.0,
     actualEndDate: json["actual_end_date"],
     amendedFrom: json["amended_from"],
-    doctype: json["doctype"],
-    customPrintItems: List<dynamic>.from(
+    doctype: json["doctype"] ?? "",
+    customPrintItems: json["custom_print_items"] != null ? List<dynamic>.from(
       json["custom_print_items"].map((x) => x),
-    ),
-    timeLogs: List<TimeLog>.from(
+    ) : [],
+    timeLogs: json["time_logs"] != null ? List<TimeLog>.from(
       json["time_logs"].map((x) => TimeLog.fromJson(x)),
-    ),
-    customEmployees: List<CustomEmployee>.from(
+    ) : [],
+    customEmployees: json["custom_employees"] != null ? List<CustomEmployee>.from(
       json["custom_employees"].map((x) => CustomEmployee.fromJson(x)),
-    ),
-    customItems: List<CustomItem>.from(
+    ) : [],
+    customItems: json["custom_items"] != null ? List<CustomItem>.from(
       json["custom_items"].map((x) => CustomItem.fromJson(x)),
-    ),
-    scheduledTimeLogs: List<dynamic>.from(
+    ) : [],
+    scheduledTimeLogs: json["scheduled_time_logs"] != null ? List<dynamic>.from(
       json["scheduled_time_logs"].map((x) => x),
-    ),
+    ) : [],
   );
 
   Map<String, dynamic> toJson() => {
@@ -238,22 +238,22 @@ class CustomEmployee {
   });
 
   factory CustomEmployee.fromJson(Map<String, dynamic> json) => CustomEmployee(
-    name: json["name"],
-    owner: json["owner"],
+    name: json["name"] ?? "",
+    owner: json["owner"] ?? "",
     creation: DateTime.parse(json["creation"]),
     modified: DateTime.parse(json["modified"]),
-    modifiedBy: json["modified_by"],
+    modifiedBy: json["modified_by"] ?? "",
     docstatus: json["docstatus"]?.toDouble() ?? 0.0,
     idx: json["idx"]?.toDouble() ?? 0.0,
-    employees: json["employees"],
-    name1: json["name1"],
+    employees: json["employees"] ?? "",
+    name1: json["name1"] ?? "",
     isPercentage: json["is_percentage"]?.toDouble() ?? 0.0,
     percentage: json["percentage"]?.toDouble() ?? 0.0,
     commission: json["commission"]?.toDouble() ?? 0.0,
-    parent: json["parent"],
-    parentfield: json["parentfield"],
-    parenttype: json["parenttype"],
-    doctype: json["doctype"],
+    parent: json["parent"] ?? "",
+    parentfield: json["parentfield"] ?? "",
+    parenttype: json["parenttype"] ?? "",
+    doctype: json["doctype"] ?? "",
   );
 
   Map<String, dynamic> toJson() => {
@@ -312,21 +312,21 @@ class CustomItem {
   });
 
   factory CustomItem.fromJson(Map<String, dynamic> json) => CustomItem(
-    name: json["name"],
-    owner: json["owner"],
+    name: json["name"] ?? "",
+    owner: json["owner"] ?? "",
     creation: DateTime.parse(json["creation"]),
     modified: DateTime.parse(json["modified"]),
-    modifiedBy: json["modified_by"],
+    modifiedBy: json["modified_by"] ?? "",
     docstatus: json["docstatus"]?.toDouble() ?? 0.0,
     idx: json["idx"]?.toDouble() ?? 0.0,
-    itemName: json["item_name"],
+    itemName: json["item_name"] ?? "",
     copies: json["copies"]?.toDouble() ?? 0.0,
     designCost: json["design_cost"]?.toDouble() ?? 0.0,
     remarks: json["remarks"],
-    parent: json["parent"],
-    parentfield: json["parentfield"],
-    parenttype: json["parenttype"],
-    doctype: json["doctype"],
+    parent: json["parent"] ?? "",
+    parentfield: json["parentfield"] ?? "",
+    parenttype: json["parenttype"] ?? "",
+    doctype: json["doctype"] ?? "",
   );
 
   Map<String, dynamic> toJson() => {

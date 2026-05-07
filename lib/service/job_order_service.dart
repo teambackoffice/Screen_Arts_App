@@ -30,6 +30,8 @@ class JobWorkService {
           'Content-Type': 'application/json',
         },
       );
+      print(response);
+      print("url $_url");
 
       if (response.statusCode == 200) {
         print("API Success: ${response.body}");
@@ -40,6 +42,7 @@ class JobWorkService {
         throw Exception("API Error: ${response.statusCode}");
       }
     } catch (e) {
+      print("Error is $e");
       return null;
     }
   }

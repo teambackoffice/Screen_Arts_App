@@ -99,7 +99,9 @@ class _MainHomepageState extends State<MainHomepage>
                   child: Consumer<LogoutController>(
                     builder: (ctx, logoutCtrl, _) {
                       return GestureDetector(
-                        onTap: logoutCtrl.isLoading ? null : () => Navigator.pop(ctx),
+                        onTap: logoutCtrl.isLoading
+                            ? null
+                            : () => Navigator.pop(ctx),
                         child: Container(
                           height: 46,
                           decoration: BoxDecoration(
@@ -135,14 +137,17 @@ class _MainHomepageState extends State<MainHomepage>
                         onTap: logoutCtrl.isLoading
                             ? null
                             : () async {
-                                final success = await logoutCtrl.logout(username);
+                                final success = await logoutCtrl.logout(
+                                  username,
+                                );
                                 if (!ctx.mounted) return;
 
                                 if (success) {
                                   Navigator.pushAndRemoveUntil(
                                     ctx,
                                     MaterialPageRoute(
-                                        builder: (_) => const LoginPage()),
+                                      builder: (_) => const LoginPage(),
+                                    ),
                                     (route) => false,
                                   );
                                 } else {
@@ -150,7 +155,8 @@ class _MainHomepageState extends State<MainHomepage>
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: const Text(
-                                          'Logout failed. Please try again.'),
+                                        'Logout failed. Please try again.',
+                                      ),
                                       backgroundColor: const Color(0xFF993C1D),
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(
@@ -177,7 +183,8 @@ class _MainHomepageState extends State<MainHomepage>
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Text(
@@ -252,16 +259,7 @@ class _MainHomepageState extends State<MainHomepage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Good afternoon',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  fullName,
+                  ' ${fullName.isNotEmpty ? fullName[0].toUpperCase() + fullName.substring(1) : ''}',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
